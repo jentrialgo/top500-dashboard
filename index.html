@@ -437,7 +437,7 @@
                     <canvas id="accVendorChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Accelerator/Co-Processor Type</h3>
+                    <h3>Top Accelerator Families</h3>
                     <canvas id="acceleratorChart"></canvas>
                 </div>
                 <div class="chart-container">
@@ -1287,19 +1287,48 @@
                 }
             });
 
-            // 11. Accelerator Type
-            updateH3('acceleratorChart', `Top Accelerator Models ${shareLabel}`);
+            // 11. Accelerator Families (Grouped Variants)
+            updateH3('acceleratorChart', `Top Accelerator Families ${shareLabel}`);
             
-            // Filter out 'None' for the models chart too
-            const allAccCounts = getAggregatedData(['Accelerator/Co-Processor', 'Accelerator']);
-            const filteredAccCounts = {};
-            Object.entries(allAccCounts).forEach(([key, val]) => {
-                if (key.toLowerCase() !== 'none' && key.toLowerCase() !== 'unknown' && key !== 'Unknown') {
-                    filteredAccCounts[key] = val;
+            const simplifyAcc = (name) => {
+                if (!name || name.toLowerCase() === 'none' || name.toLowerCase() === 'unknown') return null;
+                
+                const s = name.toUpperCase();
+                
+                // Proactive grouping for major families
+                if (s.includes('H100')) return 'NVIDIA H100';
+                if (s.includes('A100')) return 'NVIDIA A100';
+                if (s.includes('V100')) return 'NVIDIA V100';
+                if (s.includes('GH200')) return 'NVIDIA GH200';
+                if (s.includes('P100')) return 'NVIDIA P100';
+                if (s.includes('MI300')) return 'AMD Instinct MI300';
+                if (s.includes('MI250')) return 'AMD Instinct MI250';
+                if (s.includes('MI210')) return 'AMD Instinct MI210';
+                if (s.includes('GPU MAX')) return 'Intel Data Center GPU Max';
+                if (s.includes('XEON PHI')) return 'Intel Xeon Phi';
+                if (s.includes('GAUDI')) return 'Intel Gaudi';
+                
+                // Fallback for general cleanup if no specific family match
+                return name.replace(/\s\d+G(B)?/gi, '') // Removes 80G, 80GB, 40G, etc.
+                            .replace(/Tesla\s/gi, '')
+                            .replace(/\sSXM\d*/gi, '')
+                            .replace(/\sPCIe/gi, '')
+                            .replace(/\sNVLink/gi, '')
+                            .replace(/,/g, '')
+                            .trim();
+            };
+
+            const accFamilyStats = {};
+            data.forEach(item => {
+                const rawName = getColumn(item, 'Accelerator/Co-Processor', 'Accelerator');
+                const family = simplifyAcc(rawName);
+                if (family) {
+                    const val = viewMode === 'system' ? 1 : parseNumber(item[rmaxKey]);
+                    accFamilyStats[family] = (accFamilyStats[family] || 0) + val;
                 }
             });
             
-            const topAccs = Object.entries(filteredAccCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            const topAccs = Object.entries(accFamilyStats).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
             charts.accelerator = new Chart(document.getElementById('acceleratorChart'), {
                 type: 'bar',
@@ -1324,7 +1353,7 @@
                         y: { 
                             ticks: { 
                                 autoSkip: false,
-                                font: { size: 11 }
+                                font: { size: 10 }
                             }
                         },
                         x: { ticks: { callback: (v) => formatNumberNice(v) } }
