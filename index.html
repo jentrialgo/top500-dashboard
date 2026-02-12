@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -301,7 +301,7 @@
             <h1>🖥️ TOP500 Supercomputers Dashboard</h1>
             <div class="upload-section">
                 <div class="file-input-wrapper">
-                    <label for="fileInput" class="file-button">📁 Cargar archivo Excel/CSV</label>
+                    <label for="fileInput" class="file-button">📁 Upload Excel/CSV File</label>
                     <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.txt">
                 </div>
                 <div id="fileName" style="margin-top: 10px; color: #666;"></div>
@@ -312,22 +312,22 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon" style="background: rgba(108, 93, 211, 0.1); color: #6C5DD3;">🖥️</div>
-                    <div class="stat-label">Total Sistemas</div>
+                    <div class="stat-label">Total Systems</div>
                     <div class="stat-value" id="totalSystems">0</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon" style="background: rgba(255, 117, 76, 0.1); color: #FF754C;">🚀</div>
-                    <div class="stat-label">Rmax Total (PFlop/s)</div>
+                    <div class="stat-label">Total Rmax (PFlop/s)</div>
                     <div class="stat-value" id="totalRmax">0</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon" style="background: rgba(63, 140, 255, 0.1); color: #3F8CFF;">🌍</div>
-                    <div class="stat-label">Países Representados</div>
+                    <div class="stat-label">Countries Represented</div>
                     <div class="stat-value" id="totalCountries">0</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon" style="background: rgba(255, 206, 115, 0.1); color: #FFCE73;">⚡</div>
-                    <div class="stat-label">Potencia Total (MW)</div>
+                    <div class="stat-label">Total Power (MW)</div>
                     <div class="stat-value" id="totalPower">0</div>
                 </div>
                 <div class="stat-card">
@@ -337,112 +337,112 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon" style="background: rgba(79, 209, 197, 0.1); color: #4FD1C5;">🌱</div>
-                    <div class="stat-label">Eficiencia Media (GFlops/W)</div>
+                    <div class="stat-label">Average Efficiency (GFlops/W)</div>
                     <div class="stat-value" id="avgEfficiency">0</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon" style="background: rgba(160, 215, 231, 0.1); color: #A0D7E7;">🏭</div>
-                    <div class="stat-label">Fabricantes</div>
+                    <div class="stat-label">Manufacturers</div>
                     <div class="stat-value" id="totalManufacturers">0</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon" style="background: rgba(207, 200, 255, 0.1); color: #CFC8FF;">⚡</div>
-                    <div class="stat-label">Sistemas con Acelerador</div>
+                    <div class="stat-label">Systems with Accelerator</div>
                     <div class="stat-value" id="totalAccelerators">0</div>
                 </div>
             </div>
 
             <div class="charts-grid">
                 <div class="chart-container">
-                    <h3>Top 10 Países por Número de Sistemas</h3>
+                    <h3>Top 10 Countries by Number of Systems</h3>
                     <canvas id="countriesChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Distribución por Fabricante</h3>
+                    <h3>Distribution by Manufacturer</h3>
                     <canvas id="manufacturersChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Sistemas por Año</h3>
+                    <h3>Systems by Year</h3>
                     <canvas id="yearChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Top 10 por Rendimiento (Rmax)</h3>
+                    <h3>Top 10 by Performance (Rmax)</h3>
                     <canvas id="performanceChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Top 10 por Eficiencia Energética</h3>
+                    <h3>Top 10 by Energy Efficiency</h3>
                     <canvas id="efficiencyChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Rendimiento vs Potencia (Scatter)</h3>
+                    <h3>Performance vs Power (Scatter)</h3>
                     <canvas id="scatterChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Distribución por Continente</h3>
+                    <h3>Distribution by Continent</h3>
                     <canvas id="continentChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Familia de Sistemas Operativos</h3>
+                    <h3>Operating System Family</h3>
                     <canvas id="osChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Tecnología de Procesador</h3>
+                    <h3>Processor Technology</h3>
                     <canvas id="processorChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Tipo de Acelerador/Co-Procesador</h3>
+                    <h3>Accelerator/Co-Processor Type</h3>
                     <canvas id="acceleratorChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Familia de Interconexión</h3>
+                    <h3>Interconnect Family</h3>
                     <canvas id="interconnectChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Segmento de Mercado</h3>
+                    <h3>Market Segment</h3>
                     <canvas id="segmentChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Rendimiento Medio por Año (PFlop/s)</h3>
+                    <h3>Average Performance per Year (PFlop/s)</h3>
                     <canvas id="avgPerformanceChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Top 10 Países por Rmax Total</h3>
+                    <h3>Top 10 Countries by Total Rmax</h3>
                     <canvas id="countryPerformanceChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Distribución de Cores (rangos)</h3>
+                    <h3>Cores Distribution (Ranges)</h3>
                     <canvas id="coresDistChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Arquitectura del Sistema</h3>
+                    <h3>System Architecture</h3>
                     <canvas id="architectureChart"></canvas>
                 </div>
             </div>
 
             <div class="table-container">
-                <h3>Explorar Datos</h3>
+                <h3>Explore Data</h3>
                 
                 <div class="filters">
                     <div class="filter-group">
-                        <label>Buscar</label>
-                        <input type="text" id="searchInput" placeholder="Buscar por nombre, país, fabricante...">
+                        <label>Search</label>
+                        <input type="text" id="searchInput" placeholder="Search by name, country, manufacturer...">
                     </div>
                     <div class="filter-group">
-                        <label>País</label>
+                        <label>Country</label>
                         <select id="countryFilter">
-                            <option value="">Todos los países</option>
+                            <option value="">All Countries</option>
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label>Fabricante</label>
+                        <label>Manufacturer</label>
                         <select id="manufacturerFilter">
-                            <option value="">Todos los fabricantes</option>
+                            <option value="">All Manufacturers</option>
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label>Año</label>
+                        <label>Year</label>
                         <select id="yearFilter">
-                            <option value="">Todos los años</option>
+                            <option value="">All Years</option>
                         </select>
                     </div>
                 </div>
@@ -452,13 +452,13 @@
                         <thead>
                             <tr>
                                 <th data-column="Rank">Rank <span class="sort-indicator"></span></th>
-                                <th data-column="Name">Nombre <span class="sort-indicator"></span></th>
-                                <th data-column="Country">País <span class="sort-indicator"></span></th>
-                                <th data-column="Manufacturer">Fabricante <span class="sort-indicator"></span></th>
-                                <th data-column="Year">Año <span class="sort-indicator"></span></th>
+                                <th data-column="Name">Name <span class="sort-indicator"></span></th>
+                                <th data-column="Country">Country <span class="sort-indicator"></span></th>
+                                <th data-column="Manufacturer">Manufacturer <span class="sort-indicator"></span></th>
+                                <th data-column="Year">Year <span class="sort-indicator"></span></th>
                                 <th data-column="Rmax [TFlop/s]">Rmax (TFlop/s) <span class="sort-indicator"></span></th>
                                 <th data-column="Total Cores">Cores <span class="sort-indicator"></span></th>
-                                <th data-column="Power (kW)">Potencia (kW) <span class="sort-indicator"></span></th>
+                                <th data-column="Power (kW)">Power (kW) <span class="sort-indicator"></span></th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
@@ -469,7 +469,7 @@
         </div>
 
         <div id="noData" class="no-data">
-            <h2>👆 Por favor, carga un archivo Excel o CSV para comenzar</h2>
+            <h2>👆 Please upload an Excel or CSV file to start</h2>
         </div>
     </div>
 
@@ -480,12 +480,12 @@
         let sortDirection = 'asc';
         let charts = {};
 
-        // Cargar archivo
+        // Load file
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
 
-            document.getElementById('fileName').textContent = `Archivo: ${file.name}`;
+            document.getElementById('fileName').textContent = `File: ${file.name}`;
 
             const reader = new FileReader();
             const isExcel = file.name.match(/\.(xlsx|xls)$/i);
@@ -511,7 +511,7 @@
         function parseCSV(content) {
             const lines = content.split(/\r?\n/);
             
-            // Detectar delimitador (tabulador, coma, punto y coma)
+            // Detect delimiter (tab, comma, semicolon)
             const firstLine = lines[0];
             let delimiter = '\t';
             if (firstLine.split('\t').length < 5) {
@@ -522,10 +522,10 @@
                 }
             }
             
-            console.log('Delimitador detectado:', delimiter === '\t' ? 'TAB' : delimiter);
+            console.log('Delimiter detected:', delimiter === '\t' ? 'TAB' : delimiter);
             
             const headers = lines[0].split(delimiter).map(h => h.trim().replace(/^"|"$/g, ''));
-            console.log('Columnas encontradas:', headers.length, headers.slice(0, 5));
+            console.log('Columns found:', headers.length, headers.slice(0, 5));
             
             data = [];
             for (let i = 1; i < lines.length; i++) {
@@ -542,9 +542,9 @@
                 data.push(row);
             }
 
-            console.log('Filas procesadas:', data.length);
+            console.log('Rows processed:', data.length);
             if (data.length > 0) {
-                console.log('Primera fila:', data[0]);
+                console.log('First row:', data[0]);
             }
 
             processData(data);
@@ -552,7 +552,7 @@
 
         function processData(jsonData) {
             data = jsonData.map(row => {
-                // Normalizar nombres de columnas (quitar espacios extra)
+                // Normalize column names (remove extra spaces)
                 const normalized = {};
                 Object.keys(row).forEach(key => {
                     normalized[key.trim()] = row[key];
@@ -560,10 +560,10 @@
                 return normalized;
             });
 
-            console.log('Total de registros:', data.length);
+            console.log('Total records:', data.length);
             if (data.length > 0) {
-                console.log('Columnas disponibles:', Object.keys(data[0]));
-                console.log('Ejemplo de datos:', data[0]);
+                console.log('Available columns:', Object.keys(data[0]));
+                console.log('Data example:', data[0]);
             }
 
             if (data.length > 0) {
@@ -575,7 +575,7 @@
         }
 
         function initializeDashboard() {
-            // Configuración global de Chart.js
+            // Global Chart.js configuration
             Chart.defaults.font.family = "'DM Sans', sans-serif";
             Chart.defaults.color = '#808191';
             Chart.defaults.borderColor = '#E4E4E4';
@@ -605,7 +605,7 @@
             return isNaN(num) ? 0 : num;
         }
 
-        // Colores del tema
+        // Theme colors
         const themeColors = {
             primary: '#6C5DD3',
             primaryLight: 'rgba(108, 93, 211, 0.2)',
@@ -694,7 +694,7 @@
             Object.values(charts).forEach(chart => chart.destroy());
             charts = {};
 
-            // 1. Gráfico de países
+            // 1. Countries Chart
             const countryCounts = {};
             data.forEach(item => {
                 const country = getColumn(item, 'Country', 'country', 'COUNTRY', 'País') || 'Unknown';
@@ -709,7 +709,7 @@
                 data: {
                     labels: topCountries.map(c => c[0]),
                     datasets: [{
-                        label: 'Número de Sistemas',
+                        label: 'Number of Systems',
                         data: topCountries.map(c => c[1]),
                         backgroundColor: themeColors.primary,
                         borderRadius: 8,
@@ -727,7 +727,7 @@
                 }
             });
 
-            // 2. Gráfico de fabricantes
+            // 2. Manufacturers Chart
             const manufacturerCounts = {};
             data.forEach(item => {
                 const manufacturer = getColumn(item, 'Manufacturer', 'manufacturer', 'Fabricante') || 'Unknown';
@@ -751,7 +751,7 @@
                 }
             });
 
-            // 3. Gráfico por año
+            // 3. Year Chart
             const yearCounts = {};
             data.forEach(item => {
                 const year = getColumn(item, 'Year', 'year', 'Año') || 'Unknown';
@@ -764,7 +764,7 @@
                 data: {
                     labels: sortedYears.map(y => y[0]),
                     datasets: [{
-                        label: 'Sistemas por Año',
+                        label: 'Systems by Year',
                         data: sortedYears.map(y => y[1]),
                         borderColor: themeColors.success,
                         backgroundColor: (context) => {
@@ -792,7 +792,7 @@
                 }
             });
 
-            // 4. Top 10 por rendimiento
+            // 4. Top 10 by Performance
             const rmaxKey = Object.keys(data[0] || {}).find(k => 
                 k.toLowerCase().includes('rmax')
             ) || 'Rmax [TFlop/s]';
@@ -828,7 +828,7 @@
                 }
             });
 
-            // 5. Top 10 por Eficiencia Energética
+            // 5. Top 10 by Energy Efficiency
             const effKey = Object.keys(data[0] || {}).find(k => 
                 k.toLowerCase().includes('efficiency') || k.toLowerCase().includes('gflops/w')
             ) || 'Energy Efficiency [GFlops/Watts]';
@@ -865,7 +865,7 @@
                 }
             });
 
-            // 6. Scatter: Rendimiento vs Potencia
+            // 6. Scatter: Performance vs Power
             const powerKey = Object.keys(data[0] || {}).find(k => 
                 k.toLowerCase().includes('power') && k.toLowerCase().includes('kw')
             ) || 'Power (kW)';
@@ -882,7 +882,7 @@
                 type: 'scatter',
                 data: {
                     datasets: [{
-                        label: 'Sistemas',
+                        label: 'Systems',
                         data: scatterData,
                         backgroundColor: themeColors.info,
                         pointRadius: 4,
@@ -893,7 +893,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: { title: { display: true, text: 'Potencia (kW)' }, grid: { drawBorder: false } },
+                        x: { title: { display: true, text: 'Power (kW)' }, grid: { drawBorder: false } },
                         y: { title: { display: true, text: 'Rmax (TFlop/s)' }, grid: { drawBorder: false } }
                     },
                     plugins: {
@@ -911,7 +911,7 @@
                 }
             });
 
-            // 7. Distribución por Continente
+            // 7. Distribution by Continent
             const continentCounts = {};
             data.forEach(item => {
                 const continent = getColumn(item, 'Continent', 'continent', 'Continente') || 'Unknown';
@@ -934,7 +934,7 @@
                 }
             });
 
-            // 8. Familia de SO
+            // 8. OS Family
             const osCounts = {};
             data.forEach(item => {
                 const os = getColumn(item, 'OS Family', 'os family', 'Operating System') || 'Unknown';
@@ -958,7 +958,7 @@
                 }
             });
 
-            // 9. Tecnología de Procesador
+            // 9. Processor Technology
             const procCounts = {};
             data.forEach(item => {
                 let proc = getColumn(item, 'Processor Technology', 'processor technology', 'Processor') || 'Unknown';
@@ -972,7 +972,7 @@
                 data: {
                     labels: topProcs.map(p => p[0]),
                     datasets: [{
-                        label: 'Sistemas',
+                        label: 'Systems',
                         data: topProcs.map(p => p[1]),
                         backgroundColor: themeColors.warning,
                         borderRadius: 8,
@@ -989,7 +989,7 @@
                 }
             });
 
-            // 10. Tipo de Acelerador
+            // 10. Accelerator Type
             const accKey = Object.keys(data[0] || {}).find(k => 
                 k.toLowerCase().includes('accelerator') && !k.toLowerCase().includes('cores')
             ) || 'Accelerator/Co-Processor';
@@ -1007,7 +1007,7 @@
                 data: {
                     labels: topAccs.map(a => a[0]),
                     datasets: [{
-                        label: 'Sistemas',
+                        label: 'Systems',
                         data: topAccs.map(a => a[1]),
                         backgroundColor: themeColors.primary,
                         borderRadius: 8,
@@ -1021,7 +1021,7 @@
                 }
             });
 
-            // 11. Familia de Interconexión
+            // 11. Interconnect Family
             const interCounts = {};
             data.forEach(item => {
                 let inter = getColumn(item, 'Interconnect Family', 'interconnect family', 'Interconnect') || 'Unknown';
@@ -1049,7 +1049,7 @@
                 }
             });
 
-            // 12. Segmento de Mercado
+            // 12. Market Segment
             const segCounts = {};
             data.forEach(item => {
                 const seg = getColumn(item, 'Segment', 'segment', 'Segmento') || 'Unknown';
@@ -1073,7 +1073,7 @@
                 }
             });
 
-            // 13. Rendimiento Medio por Año
+            // 13. Average Performance per Year
             const yearPerformance = {};
             const yearCount2 = {};
             data.forEach(item => {
@@ -1096,7 +1096,7 @@
                 data: {
                     labels: avgByYear.map(y => y.year),
                     datasets: [{
-                        label: 'Rmax Medio (PFlop/s)',
+                        label: 'Average Rmax (PFlop/s)',
                         data: avgByYear.map(y => y.avg),
                         borderColor: themeColors.danger,
                         backgroundColor: (context) => {
@@ -1122,7 +1122,7 @@
                 }
             });
 
-            // 14. Top 10 Países por Rmax Total
+            // 14. Top 10 Countries by Total Rmax
             const countryRmax = {};
             data.forEach(item => {
                 const country = getColumn(item, 'Country', 'country', 'País') || 'Unknown';
@@ -1138,7 +1138,7 @@
                 data: {
                     labels: topCountryRmax.map(c => c[0]),
                     datasets: [{
-                        label: 'Rmax Total (TFlop/s)',
+                        label: 'Total Rmax (TFlop/s)',
                         data: topCountryRmax.map(c => c[1]),
                         backgroundColor: themeColors.info,
                         borderRadius: 8,
@@ -1152,7 +1152,7 @@
                 }
             });
 
-            // 15. Distribución de Cores
+            // 15. Cores Distribution
             const coresKey = Object.keys(data[0] || {}).find(k => 
                 k.toLowerCase().includes('total cores')
             ) || 'Total Cores';
@@ -1179,7 +1179,7 @@
                 data: {
                     labels: Object.keys(coreRanges),
                     datasets: [{
-                        label: 'Número de Sistemas',
+                        label: 'Number of Systems',
                         data: Object.values(coreRanges),
                         backgroundColor: themeColors.primary,
                         borderRadius: 8,
@@ -1193,7 +1193,7 @@
                 }
             });
 
-            // 16. Arquitectura
+            // 16. Architecture
             const archCounts = {};
             data.forEach(item => {
                 const arch = getColumn(item, 'Architecture', 'architecture', 'Arquitectura') || 'Unknown';
@@ -1219,12 +1219,12 @@
         }
 
         function populateFilters() {
-            // Países
+            // Countries
             const countries = [...new Set(data.map(item => 
                 getColumn(item, 'Country', 'country', 'País')
             ))].filter(c => c).sort();
             const countrySelect = document.getElementById('countryFilter');
-            countrySelect.innerHTML = '<option value="">Todos los países</option>';
+            countrySelect.innerHTML = '<option value="">All Countries</option>';
             countries.forEach(country => {
                 const option = document.createElement('option');
                 option.value = country;
@@ -1232,12 +1232,12 @@
                 countrySelect.appendChild(option);
             });
 
-            // Fabricantes
+            // Manufacturers
             const manufacturers = [...new Set(data.map(item => 
                 getColumn(item, 'Manufacturer', 'manufacturer', 'Fabricante')
             ))].filter(m => m).sort();
             const manufacturerSelect = document.getElementById('manufacturerFilter');
-            manufacturerSelect.innerHTML = '<option value="">Todos los fabricantes</option>';
+            manufacturerSelect.innerHTML = '<option value="">All Manufacturers</option>';
             manufacturers.forEach(manufacturer => {
                 const option = document.createElement('option');
                 option.value = manufacturer;
@@ -1245,12 +1245,12 @@
                 manufacturerSelect.appendChild(option);
             });
 
-            // Años
+            // Years
             const years = [...new Set(data.map(item => 
                 getColumn(item, 'Year', 'year', 'Año')
             ))].filter(y => y).sort((a, b) => b - a);
             const yearSelect = document.getElementById('yearFilter');
-            yearSelect.innerHTML = '<option value="">Todos los años</option>';
+            yearSelect.innerHTML = '<option value="">All Years</option>';
             years.forEach(year => {
                 const option = document.createElement('option');
                 option.value = year;
@@ -1265,7 +1265,7 @@
             document.getElementById('manufacturerFilter').addEventListener('change', applyFilters);
             document.getElementById('yearFilter').addEventListener('change', applyFilters);
 
-            // Ordenamiento de columnas
+            // Column sorting
             document.querySelectorAll('th[data-column]').forEach(th => {
                 th.addEventListener('click', function() {
                     const column = this.dataset.column;
@@ -1306,7 +1306,7 @@
         }
 
         function updateTable() {
-            // Encontrar las claves reales de las columnas
+            // Find actual column keys
             const sample = data[0] || {};
             const rankKey = Object.keys(sample).find(k => k.toLowerCase() === 'rank') || 'Rank';
             const nameKey = Object.keys(sample).find(k => k.toLowerCase() === 'name') || 'Name';
@@ -1317,7 +1317,7 @@
             const coresKey = Object.keys(sample).find(k => k.toLowerCase().includes('total cores')) || 'Total Cores';
             const powerKey = Object.keys(sample).find(k => k.toLowerCase().includes('power') && k.toLowerCase().includes('kw')) || 'Power (kW)';
 
-            // Mapeo de columnas para ordenamiento
+            // Column mapping for sort
             const columnMapping = {
                 'Rank': rankKey,
                 'Name': nameKey,
@@ -1331,12 +1331,12 @@
 
             const actualSortColumn = columnMapping[sortColumn] || sortColumn;
 
-            // Ordenar datos
+            // Sort data
             const sorted = [...filteredData].sort((a, b) => {
                 let valA = a[actualSortColumn] || '';
                 let valB = b[actualSortColumn] || '';
 
-                // Intentar convertir a número
+                // Try to convert to number
                 const numA = parseNumber(valA);
                 const numB = parseNumber(valB);
 
@@ -1349,14 +1349,14 @@
                     : String(valB).localeCompare(String(valA));
             });
 
-            // Actualizar indicadores de ordenamiento
+            // Update sort indicators
             document.querySelectorAll('.sort-indicator').forEach(span => span.textContent = '');
             const activeHeader = document.querySelector(`th[data-column="${sortColumn}"] .sort-indicator`);
             if (activeHeader) {
                 activeHeader.textContent = sortDirection === 'asc' ? '▲' : '▼';
             }
 
-            // Renderizar tabla
+            // Render table
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
