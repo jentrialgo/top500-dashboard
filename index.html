@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TOP500 Supercomputers Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -579,6 +580,12 @@
             Chart.defaults.font.family = "'DM Sans', sans-serif";
             Chart.defaults.color = '#808191';
             Chart.defaults.borderColor = '#E4E4E4';
+
+            // Register datalabels plugin once (if available)
+            if (window.ChartDataLabels && !Chart._datalabelsRegistered) {
+                Chart.register(ChartDataLabels);
+                Chart._datalabelsRegistered = true;
+            }
             
             updateStats();
             updateCharts();
@@ -621,7 +628,11 @@
                 '#3F8CFF', // Blue
                 '#FFA2C0', // Pink
                 '#A0D7E7', // Light Blue
-                '#CFC8FF'  // Light Purple
+                '#CFC8FF', // Light Purple
+                '#7BD389', // Green
+                '#E04F5F', // Red
+                '#B08968', // Brown/Tan
+                '#00C2A8'  // Cyan/Teal
             ]
         };
 
@@ -727,27 +738,80 @@
                 }
             });
 
-            // 2. Manufacturers Chart
+            // 2. Manufacturers Chart — show only top N and aggregate the rest into "Other"
             const manufacturerCounts = {};
             data.forEach(item => {
                 const manufacturer = getColumn(item, 'Manufacturer', 'manufacturer', 'Fabricante') || 'Unknown';
                 manufacturerCounts[manufacturer] = (manufacturerCounts[manufacturer] || 0) + 1;
             });
 
+            // Sort manufacturers and split into topN + other
+            const sortedMfg = Object.entries(manufacturerCounts).sort((a, b) => b[1] - a[1]);
+            const topN = 8;
+            const topMfg = sortedMfg.slice(0, topN);
+            const otherMfg = sortedMfg.slice(topN);
+            const otherTotal = otherMfg.reduce((s, x) => s + x[1], 0);
+
+            const mfgLabels = topMfg.map(x => x[0]);
+            const mfgData = topMfg.map(x => x[1]);
+            if (otherTotal > 0) {
+                mfgLabels.push('Other');
+                mfgData.push(otherTotal);
+            }
+
+            // Colors: use palette for top entries, muted grey for "Other"
+            const colors = themeColors.palette.slice(0, mfgLabels.length);
+            if (otherTotal > 0) colors[colors.length - 1] = '#E6E9EE';
+
             charts.manufacturers = new Chart(document.getElementById('manufacturersChart'), {
                 type: 'doughnut',
                 data: {
-                    labels: Object.keys(manufacturerCounts),
+                    labels: mfgLabels,
                     datasets: [{
-                        data: Object.values(manufacturerCounts),
-                        backgroundColor: themeColors.palette,
+                        data: mfgData,
+                        backgroundColor: colors,
                         borderWidth: 0
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '70%'
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 12,
+                                boxWidth: 12
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const value = ctx.parsed;
+                                    const total = ctx.chart._metasets ? ctx.chart._metasets[0].total : ctx.dataset.data.reduce((a,b)=>a+b,0);
+                                    const pct = total > 0 ? (value / total * 100).toFixed(1) : '0.0';
+                                    return `${ctx.label}: ${value} systems (${pct}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            color: '#11142D',
+                            formatter: (value, ctx) => {
+                                const data = ctx.chart.data.datasets[0].data;
+                                const total = data.reduce((s, v) => s + v, 0);
+                                const pct = total > 0 ? (value / total * 100) : 0;
+                                // Show label only if slice is >= 3% or it's the "Other" slice
+                                if (pct >= 3 || ctx.chart.data.labels[ctx.dataIndex] === 'Other') {
+                                    return `${pct.toFixed(1)}%`;
+                                }
+                                return '';
+                            },
+                            font: { weight: '700', size: 11 }
+                        }
+                    }
                 }
             });
 
