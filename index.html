@@ -370,6 +370,11 @@
                     <div class="stat-value" id="totalCores">0</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(63, 140, 255, 0.1); color: #3F8CFF;">💻</div>
+                    <div class="stat-label">Total CPU Cores</div>
+                    <div class="stat-value" id="totalCpuCores">0</div>
+                </div>
+                <div class="stat-card">
                     <div class="stat-icon" style="background: rgba(79, 209, 197, 0.1); color: #4FD1C5;">🌱</div>
                     <div class="stat-label">Average Efficiency (GFlops/W)</div>
                     <div class="stat-value" id="avgEfficiency">0</div>
@@ -463,6 +468,14 @@
                 <div class="chart-container">
                     <h3>System Architecture</h3>
                     <canvas id="architectureChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Core Composition (CPU vs Accelerator)</h3>
+                    <canvas id="coreCompositionChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Performance vs Accelerator Cores</h3>
+                    <canvas id="accCoreScatterChart"></canvas>
                 </div>
             </div>
 
@@ -747,10 +760,21 @@
             const coresKey = Object.keys(data[0] || {}).find(k => 
                 k.toLowerCase().includes('total cores')
             ) || 'Total Cores';
-            const totalCores = data.reduce((sum, item) => {
-                return sum + parseNumber(item[coresKey]);
-            }, 0);
-            document.getElementById('totalCores').textContent = (totalCores / 1000000000).toFixed(2) + 'B';
+            
+            const accCoresKeyDefault = Object.keys(data[0] || {}).find(k => 
+                k.toLowerCase().includes('accelerator') && k.toLowerCase().includes('cores')
+            ) || 'Accelerator/Co-Processor Cores';
+
+            let totalCoresValue = 0;
+            let totalAccCoresValue = 0;
+            
+            data.forEach(item => {
+                totalCoresValue += parseNumber(item[coresKey]);
+                totalAccCoresValue += parseNumber(item[accCoresKeyDefault]);
+            });
+
+            document.getElementById('totalCores').textContent = (totalCoresValue / 1000000000).toFixed(2) + 'B';
+            document.getElementById('totalCpuCores').textContent = ((totalCoresValue - totalAccCoresValue) / 1000000).toFixed(1) + 'M';
 
             const effKey = Object.keys(data[0] || {}).find(k => 
                 k.toLowerCase().includes('efficiency') || k.toLowerCase().includes('gflops/w')
@@ -1566,6 +1590,98 @@
                     cutout: '70%',
                     plugins: {
                         title: { display: true, text: `Architecture Share (${viewMode === 'system' ? 'Systems' : 'Performance'})` }
+                    }
+                }
+            });
+
+            // 17. Core Composition (CPU vs Accelerator)
+            const totalCoresKey = Object.keys(data[0] || {}).find(k => k.toLowerCase().includes('total cores')) || 'Total Cores';
+            const accCoresKey = Object.keys(data[0] || {}).find(k => k.toLowerCase().includes('accelerator') && k.toLowerCase().includes('cores')) || 'Accelerator/Co-Processor Cores';
+
+            let aggregateCpuCores = 0;
+            let aggregateAccCores = 0;
+
+            data.forEach(item => {
+                const total = parseNumber(item[totalCoresKey]);
+                const acc = parseNumber(item[accCoresKey]);
+                aggregateAccCores += acc;
+                aggregateCpuCores += Math.max(0, total - acc);
+            });
+
+            charts.coreComposition = new Chart(document.getElementById('coreCompositionChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['CPU Cores', 'Accelerator Cores'],
+                    datasets: [{
+                        data: [aggregateCpuCores, aggregateAccCores],
+                        backgroundColor: [themeColors.info, themeColors.warning],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        title: { display: true, text: 'Total Core Resource Distribution (Aggregate)' },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const value = ctx.parsed;
+                                    const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                                    const pct = (value / total * 100).toFixed(1);
+                                    return `${ctx.label}: ${formatNumberNice(value)} (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 18. Scatter: Total Cores vs Accelerator Cores
+            const coreScatterData = data
+                .filter(item => parseNumber(item[totalCoresKey]) > 0 && parseNumber(item[accCoresKey]) > 0)
+                .map(item => ({
+                    x: parseNumber(item[totalCoresKey]),
+                    y: parseNumber(item[accCoresKey]),
+                    name: getColumn(item, 'Name', 'name', 'Nombre')
+                }));
+
+            charts.accCoreScatter = new Chart(document.getElementById('accCoreScatterChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Systems',
+                        data: coreScatterData,
+                        backgroundColor: themeColors.primary,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'Total Cores' },
+                            ticks: { callback: (v) => formatNumberNice(v) }
+                        },
+                        y: { 
+                            title: { display: true, text: 'Accelerator Cores' },
+                            ticks: { callback: (v) => formatNumberNice(v) }
+                        }
+                    },
+                    plugins: {
+                        title: { display: true, text: 'Total Cores vs. Accelerator Cores' },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const name = ctx.raw.name || 'Unknown';
+                                    const cpu = ctx.raw.x - ctx.raw.y;
+                                    return `${name}: Total ${formatNumberNice(ctx.raw.x)} (CPU: ${formatNumberNice(cpu)}, Acc: ${formatNumberNice(ctx.raw.y)})`;
+                                }
+                            }
+                        }
                     }
                 }
             });
