@@ -429,6 +429,10 @@
                     <canvas id="processorChart"></canvas>
                 </div>
                 <div class="chart-container">
+                    <h3>Processor by CPU Architecture</h3>
+                    <canvas id="cpuArchChart"></canvas>
+                </div>
+                <div class="chart-container">
                     <h3>Accelerator/Co-Processor Type</h3>
                     <canvas id="acceleratorChart"></canvas>
                 </div>
@@ -1163,6 +1167,61 @@
                         y: { 
                             grid: { borderDash: [5, 5] },
                             ticks: { callback: (v) => formatNumberNice(v) }
+                        }
+                    }
+                }
+            });
+
+            // 9.5. CPU Architecture Classification
+            updateH3('cpuArchChart', `CPU Architecture Distribution ${shareLabel}`);
+            const archStats = {};
+            data.forEach(item => {
+                const tech = getColumn(item, 'Processor Technology', 'processor technology') || '';
+                const proc = getColumn(item, 'Processor', 'processor') || '';
+                const combined = (tech + ' ' + proc).toLowerCase();
+                
+                let category = 'Other';
+                if (combined.includes('intel') || combined.includes('xeon')) category = 'Intel';
+                else if (combined.includes('amd') || combined.includes('epyc') || combined.includes('zen')) category = 'AMD';
+                else if (combined.includes('arm') || combined.includes('a64fx') || combined.includes('grace') || combined.includes('graviton') || combined.includes('thunderx') || combined.includes('neoverse')) category = 'ARM';
+                
+                const value = viewMode === 'system' ? 1 : parseNumber(item[rmaxKey]);
+                archStats[category] = (archStats[category] || 0) + value;
+            });
+
+            charts.cpuArch = new Chart(document.getElementById('cpuArchChart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(archStats),
+                    datasets: [{
+                        data: Object.values(archStats),
+                        backgroundColor: Object.keys(archStats).map(l => {
+                            if (l === 'Intel') return '#0071C5'; // Intel Blue
+                            if (l === 'AMD') return '#ED1C24';   // AMD Red
+                            if (l === 'ARM') return '#374151';   // ARM Dark Grey
+                            return '#E6E9EE';                   // Other
+                        }),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { usePointStyle: true, padding: 12 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const value = ctx.parsed;
+                                    const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                                    const pct = total > 0 ? (value / total * 100).toFixed(1) : '0.0';
+                                    const label = viewMode === 'system' ? 'systems' : 'TFlop/s';
+                                    return `${ctx.label}: ${formatNumberNice(value)} ${label} (${pct}%)`;
+                                }
+                            }
                         }
                     }
                 }
