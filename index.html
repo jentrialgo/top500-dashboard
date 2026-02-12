@@ -198,6 +198,10 @@
             border-radius: 12px;
             margin-bottom: 24px;
             width: fit-content;
+            position: sticky;
+            top: 20px;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
 
         .view-mode-button {
@@ -260,12 +264,13 @@
         }
 
         th {
-            background: transparent;
+            background: var(--bg-card);
             color: var(--text-secondary);
             padding: 16px;
             text-align: left;
             position: sticky;
             top: 0;
+            z-index: 10;
             cursor: pointer;
             user-select: none;
             border-bottom: 1px solid var(--border-color);
