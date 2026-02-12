@@ -514,6 +514,7 @@
         let sortDirection = 'asc';
         let charts = {};
         let viewMode = 'system'; // 'system' or 'performance'
+        let labelColorMap = {}; // Stable color mapping for categories
 
         // Load file
         document.getElementById('fileInput').addEventListener('change', function(e) {
@@ -586,6 +587,9 @@
         }
 
         function processData(jsonData) {
+            // Reset color map when new data is loaded
+            labelColorMap = {};
+            
             data = jsonData.map(row => {
                 // Normalize column names (remove extra spaces)
                 const normalized = {};
@@ -791,6 +795,19 @@
             return viewMode === 'system' ? 'Systems' : 'Rmax (TFlop/s)';
         }
 
+        // Helper to get consistent color for labels across chart updates
+        function getColorForLabel(label) {
+            const normalized = String(label).trim();
+            if (!normalized || normalized === 'Other' || normalized === 'Unknown' || normalized === 'None' || normalized === 'N/A') {
+                return '#E6E9EE'; // Neutral grey for others
+            }
+            if (labelColorMap[normalized]) return labelColorMap[normalized];
+            
+            const colorIndex = Object.keys(labelColorMap).length % themeColors.palette.length;
+            labelColorMap[normalized] = themeColors.palette[colorIndex];
+            return labelColorMap[normalized];
+        }
+
         function updateCharts() {
             Object.values(charts).forEach(chart => chart.destroy());
             charts = {};
@@ -868,8 +885,7 @@
                 mfgData.push(otherTotal);
             }
 
-            const colors = themeColors.palette.slice(0, mfgLabels.length);
-            if (otherTotal > 0) colors[colors.length - 1] = '#E6E9EE';
+            const colors = mfgLabels.map(label => getColorForLabel(label));
 
             charts.manufacturers = new Chart(document.getElementById('manufacturersChart'), {
                 type: 'doughnut',
@@ -1084,7 +1100,7 @@
                     labels: Object.keys(continentCounts),
                     datasets: [{
                         data: Object.values(continentCounts),
-                        backgroundColor: themeColors.palette,
+                        backgroundColor: Object.keys(continentCounts).map(l => getColorForLabel(l)),
                         borderWidth: 0
                     }]
                 },
@@ -1104,7 +1120,7 @@
                     labels: Object.keys(osCounts),
                     datasets: [{
                         data: Object.values(osCounts),
-                        backgroundColor: themeColors.palette,
+                        backgroundColor: Object.keys(osCounts).map(l => getColorForLabel(l)),
                         borderWidth: 0
                     }]
                 },
@@ -1187,7 +1203,7 @@
                     labels: topInters.map(i => i[0]),
                     datasets: [{
                         data: topInters.map(i => i[1]),
-                        backgroundColor: themeColors.palette.slice(0, topInters.length),
+                        backgroundColor: topInters.map(i => getColorForLabel(i[0])),
                         borderWidth: 0
                     }]
                 },
@@ -1211,7 +1227,7 @@
                     labels: Object.keys(segCounts),
                     datasets: [{
                         data: Object.values(segCounts),
-                        backgroundColor: themeColors.palette,
+                        backgroundColor: Object.keys(segCounts).map(l => getColorForLabel(l)),
                         borderWidth: 0
                     }]
                 },
@@ -1365,7 +1381,7 @@
                     labels: Object.keys(archCounts),
                     datasets: [{
                         data: Object.values(archCounts),
-                        backgroundColor: themeColors.palette,
+                        backgroundColor: Object.keys(archCounts).map(l => getColorForLabel(l)),
                         borderWidth: 0
                     }]
                 },
