@@ -581,12 +581,15 @@
             Chart.defaults.color = '#808191';
             Chart.defaults.borderColor = '#E4E4E4';
 
-            // Register datalabels plugin once (if available)
+            // Register datalabels plugin once (if available) and DISABLE datalabels globally
             if (window.ChartDataLabels && !Chart._datalabelsRegistered) {
                 Chart.register(ChartDataLabels);
                 Chart._datalabelsRegistered = true;
             }
-            
+            // Ensure datalabels are turned off across all charts (keeps plugin available for future use)
+            Chart.defaults.plugins.datalabels = Chart.defaults.plugins.datalabels || {};
+            Chart.defaults.plugins.datalabels.display = false;
+
             updateStats();
             updateCharts();
             populateFilters();
@@ -611,6 +614,36 @@
             const num = parseFloat(str);
             return isNaN(num) ? 0 : num;
         }
+
+        // Format numbers: integers shown without decimals; decimals rounded to max 2 places
+        function formatNumberNice(n) {
+            if (n === null || n === undefined || n === '') return '';
+            const num = typeof n === 'number' ? n : parseNumber(n);
+            if (!isFinite(num)) return String(n);
+            // If essentially an integer, show without decimals
+            if (Math.abs(num - Math.round(num)) < 1e-9) return num.toLocaleString();
+            return num.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        }
+
+        // Global tooltip formatter: round decimals to 2 places when present
+        Chart.defaults.plugins.tooltip.callbacks.label = function(ctx) {
+            const parsed = ctx.parsed;
+            // Number value (bar/line/pie)
+            if (typeof parsed === 'number') {
+                const label = ctx.dataset && ctx.dataset.label ? `${ctx.dataset.label}: ` : '';
+                return label + formatNumberNice(parsed);
+            }
+
+            // Object value (scatter -> {x, y})
+            if (typeof parsed === 'object' && parsed !== null) {
+                const parts = [];
+                if (parsed.x !== undefined) parts.push(`x: ${formatNumberNice(parsed.x)}`);
+                if (parsed.y !== undefined) parts.push(`y: ${formatNumberNice(parsed.y)}`);
+                return parts.join(', ');
+            }
+
+            return String(parsed);
+        };
 
         // Theme colors
         const themeColors = {
@@ -796,20 +829,6 @@
                                     return `${ctx.label}: ${value} systems (${pct}%)`;
                                 }
                             }
-                        },
-                        datalabels: {
-                            color: '#11142D',
-                            formatter: (value, ctx) => {
-                                const data = ctx.chart.data.datasets[0].data;
-                                const total = data.reduce((s, v) => s + v, 0);
-                                const pct = total > 0 ? (value / total * 100) : 0;
-                                // Show label only if slice is >= 3% or it's the "Other" slice
-                                if (pct >= 3 || ctx.chart.data.labels[ctx.dataIndex] === 'Other') {
-                                    return `${pct.toFixed(1)}%`;
-                                }
-                                return '';
-                            },
-                            font: { weight: '700', size: 11 }
                         }
                     }
                 }
@@ -968,7 +987,7 @@
                             borderColor: '#E4E4E4',
                             borderWidth: 1,
                             callbacks: {
-                                label: (ctx) => `${ctx.raw.name}: ${ctx.raw.y.toLocaleString()} TFlop/s`
+                                label: (ctx) => `${ctx.raw.name}: ${formatNumberNice(ctx.raw.y)} TFlop/s`
                             }
                         }
                     }
