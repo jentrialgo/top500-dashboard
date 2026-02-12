@@ -1337,7 +1337,13 @@
                     datasets: [{
                         label: getChartLabel(),
                         data: topAccs.map(a => a[1]),
-                        backgroundColor: themeColors.primary,
+                        backgroundColor: topAccs.map(a => {
+                            const name = a[0].toLowerCase();
+                            if (name.includes('nvidia')) return '#76B900'; // NVIDIA Green
+                            if (name.includes('amd')) return '#ED1C24';    // AMD Red
+                            if (name.includes('intel')) return '#0071C5';  // Intel Blue
+                            return '#B0B0B0';                             // Neutral Grey
+                        }),
                         borderRadius: 8,
                         barPercentage: 0.6
                     }]
