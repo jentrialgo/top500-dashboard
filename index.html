@@ -188,6 +188,34 @@
             gap: 16px;
             margin-bottom: 32px;
             flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .view-mode-toggle {
+            display: flex;
+            background: var(--bg-body);
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            width: fit-content;
+        }
+
+        .view-mode-button {
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-mode-button.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         .filter-group {
@@ -353,6 +381,11 @@
                 </div>
             </div>
 
+            <div class="view-mode-toggle">
+                <button class="view-mode-button active" data-mode="system">System Share (Counts)</button>
+                <button class="view-mode-button" data-mode="performance">Performance Share (Rmax)</button>
+            </div>
+
             <div class="charts-grid">
                 <div class="chart-container">
                     <h3>Top 10 Countries by Number of Systems</h3>
@@ -480,6 +513,7 @@
         let sortColumn = 'Rank';
         let sortDirection = 'asc';
         let charts = {};
+        let viewMode = 'system'; // 'system' or 'performance'
 
         // Load file
         document.getElementById('fileInput').addEventListener('change', function(e) {
@@ -734,16 +768,52 @@
             return '';
         }
 
+        function getAggregatedData(columnNames) {
+            const counts = {};
+            const rmaxKey = Object.keys(data[0] || {}).find(k => 
+                k.toLowerCase().includes('rmax') || k.toLowerCase().includes('tflop')
+            ) || 'Rmax [TFlop/s]';
+            
+            data.forEach(item => {
+                let val = getColumn(item, ...columnNames) || 'Unknown';
+                if (val.length > 40) val = val.substring(0, 40) + '...';
+                
+                if (viewMode === 'system') {
+                    counts[val] = (counts[val] || 0) + 1;
+                } else {
+                    counts[val] = (counts[val] || 0) + parseNumber(item[rmaxKey]);
+                }
+            });
+            return counts;
+        }
+
+        function getChartLabel() {
+            return viewMode === 'system' ? 'Systems' : 'Rmax (TFlop/s)';
+        }
+
         function updateCharts() {
             Object.values(charts).forEach(chart => chart.destroy());
             charts = {};
 
+            const isPerf = viewMode === 'performance';
+            const shareLabel = isPerf ? '(Performance Share)' : '(System Share)';
+
+            const rmaxKey = Object.keys(data[0] || {}).find(k => 
+                k.toLowerCase().includes('rmax')
+            ) || 'Rmax [TFlop/s]';
+
+            // Helper to update container h3
+            const updateH3 = (id, text) => {
+                const canvas = document.getElementById(id);
+                if (canvas) {
+                    const h3 = canvas.closest('.chart-container').querySelector('h3');
+                    if (h3) h3.textContent = text;
+                }
+            };
+
             // 1. Countries Chart
-            const countryCounts = {};
-            data.forEach(item => {
-                const country = getColumn(item, 'Country', 'country', 'COUNTRY', 'País') || 'Unknown';
-                countryCounts[country] = (countryCounts[country] || 0) + 1;
-            });
+            updateH3('countriesChart', `Top 10 Countries ${shareLabel}`);
+            const countryCounts = getAggregatedData(['Country', 'country', 'País']);
             const topCountries = Object.entries(countryCounts)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10);
@@ -753,7 +823,7 @@
                 data: {
                     labels: topCountries.map(c => c[0]),
                     datasets: [{
-                        label: 'Number of Systems',
+                        label: getChartLabel(),
                         data: topCountries.map(c => c[1]),
                         backgroundColor: themeColors.primary,
                         borderRadius: 8,
@@ -763,20 +833,26 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false }
+                    },
                     scales: {
-                        y: { grid: { display: true, drawBorder: false } },
+                        y: { 
+                            grid: { display: true, drawBorder: false },
+                            ticks: {
+                                callback: function(value) {
+                                    return formatNumberNice(value);
+                                }
+                            }
+                        },
                         x: { grid: { display: false } }
                     }
                 }
             });
 
-            // 2. Manufacturers Chart — show only top N and aggregate the rest into "Other"
-            const manufacturerCounts = {};
-            data.forEach(item => {
-                const manufacturer = getColumn(item, 'Manufacturer', 'manufacturer', 'Fabricante') || 'Unknown';
-                manufacturerCounts[manufacturer] = (manufacturerCounts[manufacturer] || 0) + 1;
-            });
+            // 2. Manufacturers Chart
+            updateH3('manufacturersChart', `Distribution by Manufacturer ${shareLabel}`);
+            const manufacturerCounts = getAggregatedData(['Manufacturer', 'manufacturer', 'Fabricante']);
 
             // Sort manufacturers and split into topN + other
             const sortedMfg = Object.entries(manufacturerCounts).sort((a, b) => b[1] - a[1]);
@@ -792,7 +868,6 @@
                 mfgData.push(otherTotal);
             }
 
-            // Colors: use palette for top entries, muted grey for "Other"
             const colors = themeColors.palette.slice(0, mfgLabels.length);
             if (otherTotal > 0) colors[colors.length - 1] = '#E6E9EE';
 
@@ -811,22 +886,23 @@
                     maintainAspectRatio: false,
                     cutout: '70%',
                     plugins: {
+                        title: {
+                            display: true,
+                            text: `Distribution by Manufacturer (${viewMode === 'system' ? 'Systems' : 'Performance'})`
+                        },
                         legend: {
                             display: true,
                             position: 'right',
-                            labels: {
-                                usePointStyle: true,
-                                padding: 12,
-                                boxWidth: 12
-                            }
+                            labels: { usePointStyle: true, padding: 12, boxWidth: 12 }
                         },
                         tooltip: {
                             callbacks: {
                                 label: (ctx) => {
                                     const value = ctx.parsed;
-                                    const total = ctx.chart._metasets ? ctx.chart._metasets[0].total : ctx.dataset.data.reduce((a,b)=>a+b,0);
+                                    const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
                                     const pct = total > 0 ? (value / total * 100).toFixed(1) : '0.0';
-                                    return `${ctx.label}: ${value} systems (${pct}%)`;
+                                    const label = viewMode === 'system' ? 'systems' : 'TFlop/s';
+                                    return `${ctx.label}: ${formatNumberNice(value)} ${label} (${pct}%)`;
                                 }
                             }
                         }
@@ -835,11 +911,7 @@
             });
 
             // 3. Year Chart
-            const yearCounts = {};
-            data.forEach(item => {
-                const year = getColumn(item, 'Year', 'year', 'Año') || 'Unknown';
-                yearCounts[year] = (yearCounts[year] || 0) + 1;
-            });
+            const yearCounts = getAggregatedData(['Year', 'year', 'Año']);
             const sortedYears = Object.entries(yearCounts).sort((a, b) => a[0] - b[0]);
 
             charts.year = new Chart(document.getElementById('yearChart'), {
@@ -847,7 +919,7 @@
                 data: {
                     labels: sortedYears.map(y => y[0]),
                     datasets: [{
-                        label: 'Systems by Year',
+                        label: viewMode === 'system' ? 'Systems by Year' : 'Performance by Year (TFlop/s)',
                         data: sortedYears.map(y => y[1]),
                         borderColor: themeColors.success,
                         backgroundColor: (context) => {
@@ -871,15 +943,17 @@
                     interaction: {
                         intersect: false,
                         mode: 'index',
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${viewMode === 'system' ? 'Systems' : 'Performance'} by Year`
+                        }
                     }
                 }
             });
 
-            // 4. Top 10 by Performance
-            const rmaxKey = Object.keys(data[0] || {}).find(k => 
-                k.toLowerCase().includes('rmax')
-            ) || 'Rmax [TFlop/s]';
-            
+            // 4. Top 10 by Performance (Always performance)
             const topPerformance = [...data]
                 .sort((a, b) => parseNumber(b[rmaxKey]) - parseNumber(a[rmaxKey]))
                 .slice(0, 10);
@@ -903,7 +977,10 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        title: { display: true, text: 'Top 10 Systems by Performance' }
+                    },
                     scales: {
                         x: { display: false },
                         y: { grid: { display: false } }
@@ -940,7 +1017,10 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        title: { display: true, text: 'Top 10 Systems by Energy Efficiency' }
+                    },
                     scales: {
                         x: { display: false },
                         y: { grid: { display: false } }
@@ -995,11 +1075,8 @@
             });
 
             // 7. Distribution by Continent
-            const continentCounts = {};
-            data.forEach(item => {
-                const continent = getColumn(item, 'Continent', 'continent', 'Continente') || 'Unknown';
-                continentCounts[continent] = (continentCounts[continent] || 0) + 1;
-            });
+            updateH3('continentChart', `Distribution by Continent ${shareLabel}`);
+            const continentCounts = getAggregatedData(['Continent', 'continent', 'Continente']);
 
             charts.continent = new Chart(document.getElementById('continentChart'), {
                 type: 'pie',
@@ -1018,11 +1095,8 @@
             });
 
             // 8. OS Family
-            const osCounts = {};
-            data.forEach(item => {
-                const os = getColumn(item, 'OS Family', 'os family', 'Operating System') || 'Unknown';
-                osCounts[os] = (osCounts[os] || 0) + 1;
-            });
+            updateH3('osChart', `Operating System Family ${shareLabel}`);
+            const osCounts = getAggregatedData(['OS Family', 'os family', 'Operating System']);
 
             charts.os = new Chart(document.getElementById('osChart'), {
                 type: 'doughnut',
@@ -1042,12 +1116,8 @@
             });
 
             // 9. Processor Technology
-            const procCounts = {};
-            data.forEach(item => {
-                let proc = getColumn(item, 'Processor Technology', 'processor technology', 'Processor') || 'Unknown';
-                if (proc.length > 30) proc = proc.substring(0, 30) + '...';
-                procCounts[proc] = (procCounts[proc] || 0) + 1;
-            });
+            updateH3('processorChart', `Processor Technology ${shareLabel}`);
+            const procCounts = getAggregatedData(['Processor Technology', 'processor technology', 'Processor']);
             const topProcs = Object.entries(procCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
             charts.processor = new Chart(document.getElementById('processorChart'), {
@@ -1055,7 +1125,7 @@
                 data: {
                     labels: topProcs.map(p => p[0]),
                     datasets: [{
-                        label: 'Systems',
+                        label: getChartLabel(),
                         data: topProcs.map(p => p[1]),
                         backgroundColor: themeColors.warning,
                         borderRadius: 8,
@@ -1065,24 +1135,21 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false }
+                    },
                     scales: {
-                        y: { grid: { borderDash: [5, 5] } }
+                        y: { 
+                            grid: { borderDash: [5, 5] },
+                            ticks: { callback: (v) => formatNumberNice(v) }
+                        }
                     }
                 }
             });
 
             // 10. Accelerator Type
-            const accKey = Object.keys(data[0] || {}).find(k => 
-                k.toLowerCase().includes('accelerator') && !k.toLowerCase().includes('cores')
-            ) || 'Accelerator/Co-Processor';
-            const accCounts = {};
-            data.forEach(item => {
-                let acc = item[accKey] || 'None';
-                if (acc.trim() === '') acc = 'None';
-                if (acc.length > 25) acc = acc.substring(0, 25) + '...';
-                accCounts[acc] = (accCounts[acc] || 0) + 1;
-            });
+            updateH3('acceleratorChart', `Accelerator/Co-Processor Type ${shareLabel}`);
+            const accCounts = getAggregatedData(['Accelerator/Co-Processor', 'Accelerator']);
             const topAccs = Object.entries(accCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
             charts.accelerator = new Chart(document.getElementById('acceleratorChart'), {
@@ -1090,7 +1157,7 @@
                 data: {
                     labels: topAccs.map(a => a[0]),
                     datasets: [{
-                        label: 'Systems',
+                        label: getChartLabel(),
                         data: topAccs.map(a => a[1]),
                         backgroundColor: themeColors.primary,
                         borderRadius: 8,
@@ -1100,44 +1167,43 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } }
+                    plugins: { 
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { ticks: { callback: (v) => formatNumberNice(v) } }
+                    }
                 }
             });
 
             // 11. Interconnect Family
-            const interCounts = {};
-            data.forEach(item => {
-                let inter = getColumn(item, 'Interconnect Family', 'interconnect family', 'Interconnect') || 'Unknown';
-                if (inter.length > 25) inter = inter.substring(0, 25) + '...';
-                interCounts[inter] = (interCounts[inter] || 0) + 1;
-            });
+            updateH3('interconnectChart', `Interconnect Family ${shareLabel}`);
+            const interCounts = getAggregatedData(['Interconnect Family', 'interconnect family', 'Interconnect']);
             const topInters = Object.entries(interCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
             charts.interconnect = new Chart(document.getElementById('interconnectChart'), {
-                type: 'polarArea',
+                type: 'doughnut',
                 data: {
                     labels: topInters.map(i => i[0]),
                     datasets: [{
                         data: topInters.map(i => i[1]),
-                        backgroundColor: themeColors.palette.map(c => c + 'B3'), // Add transparency
+                        backgroundColor: themeColors.palette.slice(0, topInters.length),
                         borderWidth: 0
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        r: { grid: { color: '#E4E4E4' }, ticks: { display: false } }
+                    cutout: '60%',
+                    plugins: {
+                        legend: { position: 'right' }
                     }
                 }
             });
 
             // 12. Market Segment
-            const segCounts = {};
-            data.forEach(item => {
-                const seg = getColumn(item, 'Segment', 'segment', 'Segmento') || 'Unknown';
-                segCounts[seg] = (segCounts[seg] || 0) + 1;
-            });
+            updateH3('segmentChart', `Market Segment ${shareLabel}`);
+            const segCounts = getAggregatedData(['Segment', 'segment', 'Segmento']);
 
             charts.segment = new Chart(document.getElementById('segmentChart'), {
                 type: 'doughnut',
@@ -1205,24 +1271,19 @@
                 }
             });
 
-            // 14. Top 10 Countries by Total Rmax
-            const countryRmax = {};
-            data.forEach(item => {
-                const country = getColumn(item, 'Country', 'country', 'País') || 'Unknown';
-                const rmax = parseNumber(item[rmaxKey]);
-                countryRmax[country] = (countryRmax[country] || 0) + rmax;
-            });
-            const topCountryRmax = Object.entries(countryRmax)
+            // 14. Top 10 Countries by Total Performance (Repurposed to be dynamic or kept consistent)
+            const countryPerfData = getAggregatedData(['Country', 'country', 'País']);
+            const topCountryPerf = Object.entries(countryPerfData)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10);
 
             charts.countryPerformance = new Chart(document.getElementById('countryPerformanceChart'), {
                 type: 'bar',
                 data: {
-                    labels: topCountryRmax.map(c => c[0]),
+                    labels: topCountryPerf.map(c => c[0]),
                     datasets: [{
-                        label: 'Total Rmax (TFlop/s)',
-                        data: topCountryRmax.map(c => c[1]),
+                        label: getChartLabel(),
+                        data: topCountryPerf.map(c => c[1]),
                         backgroundColor: themeColors.info,
                         borderRadius: 8,
                         barPercentage: 0.6
@@ -1231,7 +1292,13 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } }
+                    plugins: { 
+                        legend: { display: false },
+                        title: { display: true, text: `Top 10 Countries by ${viewMode === 'system' ? 'Systems' : 'Performance'}` }
+                    },
+                    scales: {
+                        y: { ticks: { callback: (v) => formatNumberNice(v) } }
+                    }
                 }
             });
 
@@ -1249,12 +1316,19 @@
             };
             data.forEach(item => {
                 const cores = parseNumber(item[coresKey]);
-                if (cores < 100000) coreRanges['< 100K']++;
-                else if (cores < 500000) coreRanges['100K - 500K']++;
-                else if (cores < 1000000) coreRanges['500K - 1M']++;
-                else if (cores < 5000000) coreRanges['1M - 5M']++;
-                else if (cores < 10000000) coreRanges['5M - 10M']++;
-                else coreRanges['> 10M']++;
+                let label = '';
+                if (cores < 100000) label = '< 100K';
+                else if (cores < 500000) label = '100K - 500K';
+                else if (cores < 1000000) label = '500K - 1M';
+                else if (cores < 5000000) label = '1M - 5M';
+                else if (cores < 10000000) label = '5M - 10M';
+                else label = '> 10M';
+
+                if (viewMode === 'system') {
+                    coreRanges[label]++;
+                } else {
+                    coreRanges[label] += parseNumber(item[rmaxKey]);
+                }
             });
 
             charts.coresDist = new Chart(document.getElementById('coresDistChart'), {
@@ -1262,7 +1336,7 @@
                 data: {
                     labels: Object.keys(coreRanges),
                     datasets: [{
-                        label: 'Number of Systems',
+                        label: getChartLabel(),
                         data: Object.values(coreRanges),
                         backgroundColor: themeColors.primary,
                         borderRadius: 8,
@@ -1272,16 +1346,18 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } }
+                    plugins: { 
+                        legend: { display: false },
+                        title: { display: true, text: `Cores Distribution (${viewMode === 'system' ? 'Systems' : 'Performance'})` }
+                    },
+                    scales: {
+                        y: { ticks: { callback: (v) => formatNumberNice(v) } }
+                    }
                 }
             });
 
             // 16. Architecture
-            const archCounts = {};
-            data.forEach(item => {
-                const arch = getColumn(item, 'Architecture', 'architecture', 'Arquitectura') || 'Unknown';
-                archCounts[arch] = (archCounts[arch] || 0) + 1;
-            });
+            const archCounts = getAggregatedData(['Architecture', 'architecture', 'Arquitectura']);
 
             charts.architecture = new Chart(document.getElementById('architectureChart'), {
                 type: 'doughnut',
@@ -1296,7 +1372,10 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '70%'
+                    cutout: '70%',
+                    plugins: {
+                        title: { display: true, text: `Architecture Share (${viewMode === 'system' ? 'Systems' : 'Performance'})` }
+                    }
                 }
             });
         }
@@ -1347,6 +1426,16 @@
             document.getElementById('countryFilter').addEventListener('change', applyFilters);
             document.getElementById('manufacturerFilter').addEventListener('change', applyFilters);
             document.getElementById('yearFilter').addEventListener('change', applyFilters);
+
+            // View mode toggle
+            document.querySelectorAll('.view-mode-button').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.view-mode-button').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    viewMode = this.dataset.mode;
+                    updateCharts();
+                });
+            });
 
             // Column sorting
             document.querySelectorAll('th[data-column]').forEach(th => {
